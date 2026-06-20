@@ -4,7 +4,7 @@ import logo from '../assets/logo bq.png';
 
 const Header = () => {
   return (
-    <nav className="fixed top-0 left-0 right-0 z-[60] bg-white border-b border-rose-50 py-3 shadow-sm">
+    <nav className="fixed top-0 left-0 right-0 z-[60] bg-gradient-to-r from-rose-100 via-white to-rose-50 border-b border-rose-200 py-3 shadow-md backdrop-blur-sm bg-opacity-90">
       <div className="flex flex-col items-center justify-center relative max-w-5xl mx-auto px-4">
         
         {/* Top Decoration & Logo */}
