@@ -86,7 +86,7 @@ const OutflowPage = () => {
             <ArrowLeft size={24} />
           </button>
           <div className="text-center">
-            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight">LUCY Collections</h1>
+            <h1 className="text-xl md:text-2xl font-black uppercase tracking-tight">Nyakoe Fassion Centre</h1>
             <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-violet-500">Outflows & Sales</p>
           </div>
           <div className="w-10"></div>

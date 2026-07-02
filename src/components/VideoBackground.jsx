@@ -44,6 +44,9 @@ const VideoBackground = () => {
         loop 
         muted 
         playsInline
+        controlsList="nodownload"
+        disablePictureInPicture
+        disableRemotePlayback
         className="absolute top-1/2 left-1/2 pointer-events-none transition-opacity duration-1000 object-cover opacity-80"
         style={{
           transform: 'translate(-50%, -50%)',
