@@ -25,8 +25,6 @@ const TailoringDashboard = () => {
   const [editingTailorId, setEditingTailorId] = useState(null);
   const [tailorNoteInput, setTailorNoteInput] = useState('');
   const [tailorExpenses, setTailorExpenses] = useState([]);
-  const [expandedTailorId, setExpandedTailorId] = useState(null);
-  const [tailorPaymentInputs, setTailorPaymentInputs] = useState({});
 
   const loadData = () => {
     const savedOrders = JSON.parse(localStorage.getItem('lucy_tailoring_orders') || '[]');
@@ -111,41 +109,17 @@ const TailoringDashboard = () => {
     setEditingTailorId(null);
   };
 
-  const handleAddTailorPayment = (tailor) => {
-    let amount = parseFloat(tailorPaymentInputs[tailor.id] || 0);
-    if (!amount || amount <= 0) return;
-    
-    const now = new Date();
-    const date = now.toISOString().split('T')[0];
-    const time = now.toTimeString().split(' ')[0].substring(0, 5);
-
-    const newExpense = {
-      id: Date.now().toString(),
-      tailorName: tailor.name,
-      amount,
-      method: 'Cash',
-      date,
-      time,
-      notes: 'Inline payment'
-    };
-
-    const saved = JSON.parse(localStorage.getItem('lucy_tailor_expenses') || '[]');
-    saved.unshift(newExpense);
-    localStorage.setItem('lucy_tailor_expenses', JSON.stringify(saved));
-    setTailorExpenses(saved);
-
-    setTailorPaymentInputs(prev => ({ ...prev, [tailor.id]: '' }));
-  };
-
-  const renderTailorCard = (tailor) => {
-    const isExpanded = expandedTailorId === tailor.id;
+  const renderTailorCard = (tailor, index) => {
     const tailorHistory = tailorExpenses.filter(e => e.tailorName === tailor.name);
     const totalPaid = tailorHistory.reduce((s, e) => s + (e.amount || 0), 0);
 
     return (
-      <div key={tailor.id} className={`bg-white rounded-sm shadow-sm border overflow-hidden transition-all ${isExpanded ? 'border-emerald-200' : 'border-slate-100'} p-4`}>
-        <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedTailorId(isExpanded ? null : tailor.id)}>
+      <div key={tailor.id} className="bg-white rounded-sm shadow-sm border border-slate-100 p-4 hover:border-emerald-200 transition-all cursor-pointer" onClick={() => navigate('/tailoring/tailor/' + tailor.id)}>
+        <div className="flex items-center justify-between">
           <div className="flex items-center gap-3">
+            <span className="flex-shrink-0 w-7 h-7 rounded-full bg-slate-900 text-white font-black text-xs flex items-center justify-center">
+              {index}
+            </span>
             <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-black text-lg flex-shrink-0">
               {tailor.name?.charAt(0).toUpperCase()}
             </div>
@@ -159,44 +133,6 @@ const TailoringDashboard = () => {
             <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Paid</span>
           </div>
         </div>
-
-        {isExpanded && (
-          <div className="mt-4 border-t border-slate-100 pt-4 animate-fade-in">
-            <h5 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Add New Payment</h5>
-            <div className="flex gap-2 mb-5">
-              <input
-                type="number"
-                placeholder="Amount (Ksh)"
-                value={tailorPaymentInputs[tailor.id] || ''}
-                onChange={e => setTailorPaymentInputs(prev => ({ ...prev, [tailor.id]: e.target.value }))}
-                className="flex-1 bg-slate-50 border border-slate-200 rounded-sm px-3 py-2 text-sm focus:border-emerald-400 outline-none"
-              />
-              <button
-                onClick={(e) => { e.stopPropagation(); handleAddTailorPayment(tailor); }}
-                className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-[10px] tracking-widest uppercase px-4 py-2 rounded-sm transition-colors"
-              >
-                + Record
-              </button>
-            </div>
-
-            <h5 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Payment History</h5>
-            {tailorHistory.length === 0 ? (
-              <p className="text-xs text-slate-500 italic">No payments recorded yet.</p>
-            ) : (
-              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                {tailorHistory.map(exp => (
-                  <div key={exp.id} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-sm border border-slate-100">
-                    <div>
-                      <p className="text-xs font-bold text-slate-700">{exp.date} <span className="text-slate-400 font-normal">at {exp.time}</span></p>
-                      {exp.notes && <p className="text-[10px] text-slate-500 mt-0.5">{exp.notes}</p>}
-                    </div>
-                    <span className="text-sm font-black text-emerald-600">Ksh {exp.amount.toLocaleString()}</span>
-                  </div>
-                ))}
-              </div>
-            )}
-          </div>
-        )}
       </div>
     );
   };
@@ -506,7 +442,7 @@ const TailoringDashboard = () => {
                 </p>
               </div>
             ) : (
-              filteredTailors.map(tailor => renderTailorCard(tailor))
+              filteredTailors.map((tailor, i) => renderTailorCard(tailor, i + 1))
             )}
           </div>
         )}
