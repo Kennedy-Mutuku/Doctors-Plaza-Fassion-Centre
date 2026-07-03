@@ -143,17 +143,17 @@ const LandingPage = () => {
 
                   <div className="w-px h-6 bg-white/10 hidden sm:block"></div>
 
-                  {/* Tailoring Rev */}
+                  {/* Tailoring Revenue */}
                   <div className="flex flex-col items-start">
-                    <h3 className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-emerald-400/70 mb-0.5">Tailor Rev</h3>
+                    <h3 className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-emerald-400/70 mb-0.5">Tailoring Revenue</h3>
                     <p className="text-xs md:text-sm font-black text-emerald-100">Ksh {tailoringRevenue.toLocaleString()}</p>
                   </div>
 
                   <div className="w-px h-6 bg-white/10 hidden sm:block"></div>
 
-                  {/* Tailoring Exp */}
+                  {/* Tailoring Expenses */}
                   <div className="flex flex-col items-start">
-                    <h3 className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-rose-400/70 mb-0.5">Tailor Exp</h3>
+                    <h3 className="text-[7px] md:text-[8px] font-bold uppercase tracking-[0.15em] md:tracking-[0.2em] text-rose-400/70 mb-0.5">Tailoring Expenses</h3>
                     <p className="text-xs md:text-sm font-black text-rose-100">Ksh {tailoringExpenses.toLocaleString()}</p>
                   </div>
 

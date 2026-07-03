@@ -49,7 +49,7 @@ const OnboardTailorForm = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Tailor Name *</label>
-                <input type="text" value={tailorName} onChange={e => setTailorName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 outline-none" placeholder="e.g. Kennedy Mutuku" />
+                <input type="text" value={tailorName} onChange={e => setTailorName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 outline-none" placeholder="e.g. Lucy Kepher" />
               </div>
 
               <div>

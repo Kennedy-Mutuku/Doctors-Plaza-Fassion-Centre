@@ -171,7 +171,7 @@ const TailoringPage = () => {
                   <div className="grid md:grid-cols-2 gap-6">
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-600 ml-1">Customer Name</label>
-                      <input type="text" placeholder="e.g. Kennedy Mutuku" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
+                      <input type="text" placeholder="e.g. Lucy Kepher" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
                     </div>
                     <div className="space-y-2">
                       <label className="text-sm font-bold text-slate-600 ml-1">Phone Number</label>
