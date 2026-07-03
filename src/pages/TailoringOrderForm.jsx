@@ -82,11 +82,11 @@ const TailoringOrderForm = () => {
             <div className="space-y-4">
               <div>
                 <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Full Name</label>
-                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all" placeholder="e.g. Jane Doe" />
+                <input type="text" value={customerName} onChange={e => setCustomerName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all" placeholder="e.g. Kennedy Mutuku" />
               </div>
               <div>
                 <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Phone Number</label>
-                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value)} className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all" placeholder="07xx xxx xxx" />
+                <input type="tel" value={customerPhone} onChange={e => setCustomerPhone(e.target.value.replace(/[^0-9]/g, ''))} maxLength={10} className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none transition-all" placeholder="07XXXXXXXX" />
               </div>
             </div>
           </div>

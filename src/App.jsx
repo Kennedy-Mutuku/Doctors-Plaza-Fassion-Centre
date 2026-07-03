@@ -7,6 +7,7 @@ import TailoringDashboard from './pages/TailoringDashboard';
 import TailoringOrderForm from './pages/TailoringOrderForm';
 import TailorExpenseForm from './pages/TailorExpenseForm';
 import TailoringOrderDetails from './pages/TailoringOrderDetails';
+import OnboardTailorForm from './pages/OnboardTailorForm';
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
         <Route path="/tailoring/new" element={<TailoringOrderForm />} />
         <Route path="/tailoring/expense" element={<TailorExpenseForm />} />
         <Route path="/tailoring/order/:id" element={<TailoringOrderDetails />} />
+        <Route path="/tailoring/onboard" element={<OnboardTailorForm />} />
         
         {/* Redirect unknown routes */}
         <Route path="*" element={<Navigate to="/" replace />} />

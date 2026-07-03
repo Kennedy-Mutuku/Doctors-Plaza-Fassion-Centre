@@ -174,11 +174,11 @@ const CustomersPage = () => {
               <div className="p-8 space-y-4">
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-600 ml-1">Full Name</label>
-                  <input type="text" placeholder="Enter customer name..." className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
+                  <input type="text" placeholder="e.g. Kennedy Mutuku" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
                 </div>
                 <div className="space-y-2">
                   <label className="text-sm font-bold text-slate-600 ml-1">Phone Number</label>
-                  <input type="text" placeholder="e.g. 0712345678" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
+                  <input type="tel" maxLength={10} onInput={(e) => e.target.value = e.target.value.replace(/[^0-9]/g, '')} placeholder="07XXXXXXXX" className="w-full px-5 py-3.5 bg-slate-50 border-none rounded-2xl focus:ring-4 focus:ring-blue-500/10 transition-all font-medium" />
                 </div>
               </div>
               <div className="p-8 bg-slate-50 border-t border-slate-100 flex justify-end gap-4">

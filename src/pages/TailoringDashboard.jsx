@@ -21,15 +21,20 @@ const TailoringDashboard = () => {
   const [noteInputs, setNoteInputs] = useState({});
   const [editingNoteId, setEditingNoteId] = useState(null);
 
-  // Tailor notes
+  // Tailor notes and payments
   const [editingTailorId, setEditingTailorId] = useState(null);
   const [tailorNoteInput, setTailorNoteInput] = useState('');
+  const [tailorExpenses, setTailorExpenses] = useState([]);
+  const [expandedTailorId, setExpandedTailorId] = useState(null);
+  const [tailorPaymentInputs, setTailorPaymentInputs] = useState({});
 
   const loadData = () => {
     const savedOrders = JSON.parse(localStorage.getItem('lucy_tailoring_orders') || '[]');
     setOrders(savedOrders);
     const savedTailors = JSON.parse(localStorage.getItem('lucy_tailors') || '[]');
     setTailors(savedTailors);
+    const savedExpenses = JSON.parse(localStorage.getItem('lucy_tailor_expenses') || '[]');
+    setTailorExpenses(savedExpenses);
   };
 
   useEffect(() => { loadData(); }, []);
@@ -106,7 +111,97 @@ const TailoringDashboard = () => {
     setEditingTailorId(null);
   };
 
-  const OrderCard = ({ order, index }) => {
+  const handleAddTailorPayment = (tailor) => {
+    let amount = parseFloat(tailorPaymentInputs[tailor.id] || 0);
+    if (!amount || amount <= 0) return;
+    
+    const now = new Date();
+    const date = now.toISOString().split('T')[0];
+    const time = now.toTimeString().split(' ')[0].substring(0, 5);
+
+    const newExpense = {
+      id: Date.now().toString(),
+      tailorName: tailor.name,
+      amount,
+      method: 'Cash',
+      date,
+      time,
+      notes: 'Inline payment'
+    };
+
+    const saved = JSON.parse(localStorage.getItem('lucy_tailor_expenses') || '[]');
+    saved.unshift(newExpense);
+    localStorage.setItem('lucy_tailor_expenses', JSON.stringify(saved));
+    setTailorExpenses(saved);
+
+    setTailorPaymentInputs(prev => ({ ...prev, [tailor.id]: '' }));
+  };
+
+  const renderTailorCard = (tailor) => {
+    const isExpanded = expandedTailorId === tailor.id;
+    const tailorHistory = tailorExpenses.filter(e => e.tailorName === tailor.name);
+    const totalPaid = tailorHistory.reduce((s, e) => s + (e.amount || 0), 0);
+
+    return (
+      <div key={tailor.id} className={`bg-white rounded-sm shadow-sm border overflow-hidden transition-all ${isExpanded ? 'border-emerald-200' : 'border-slate-100'} p-4`}>
+        <div className="flex items-center justify-between cursor-pointer" onClick={() => setExpandedTailorId(isExpanded ? null : tailor.id)}>
+          <div className="flex items-center gap-3">
+            <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-black text-lg flex-shrink-0">
+              {tailor.name?.charAt(0).toUpperCase()}
+            </div>
+            <div>
+              <h4 className="font-bold text-slate-900">{tailor.name}</h4>
+              <p className="text-xs font-medium text-slate-500">{tailor.phone || 'No phone'}</p>
+            </div>
+          </div>
+          <div className="flex flex-col items-end">
+            <span className="font-black text-slate-800 text-base block">Ksh {totalPaid.toLocaleString()}</span>
+            <span className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Paid</span>
+          </div>
+        </div>
+
+        {isExpanded && (
+          <div className="mt-4 border-t border-slate-100 pt-4 animate-fade-in">
+            <h5 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Add New Payment</h5>
+            <div className="flex gap-2 mb-5">
+              <input
+                type="number"
+                placeholder="Amount (Ksh)"
+                value={tailorPaymentInputs[tailor.id] || ''}
+                onChange={e => setTailorPaymentInputs(prev => ({ ...prev, [tailor.id]: e.target.value }))}
+                className="flex-1 bg-slate-50 border border-slate-200 rounded-sm px-3 py-2 text-sm focus:border-emerald-400 outline-none"
+              />
+              <button
+                onClick={(e) => { e.stopPropagation(); handleAddTailorPayment(tailor); }}
+                className="bg-emerald-500 hover:bg-emerald-400 text-white font-bold text-[10px] tracking-widest uppercase px-4 py-2 rounded-sm transition-colors"
+              >
+                + Record
+              </button>
+            </div>
+
+            <h5 className="text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Payment History</h5>
+            {tailorHistory.length === 0 ? (
+              <p className="text-xs text-slate-500 italic">No payments recorded yet.</p>
+            ) : (
+              <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                {tailorHistory.map(exp => (
+                  <div key={exp.id} className="flex justify-between items-center bg-slate-50 p-2.5 rounded-sm border border-slate-100">
+                    <div>
+                      <p className="text-xs font-bold text-slate-700">{exp.date} <span className="text-slate-400 font-normal">at {exp.time}</span></p>
+                      {exp.notes && <p className="text-[10px] text-slate-500 mt-0.5">{exp.notes}</p>}
+                    </div>
+                    <span className="text-sm font-black text-emerald-600">Ksh {exp.amount.toLocaleString()}</span>
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    );
+  };
+
+  const renderOrderCard = (order, index) => {
     const isExpanded = expandedOrderId === order.id;
     const totalPaid = (order.payments || []).reduce((s, p) => s + p.amount, 0);
     const balance = Math.max(0, (order.totalAmount || 0) - totalPaid);
@@ -310,7 +405,7 @@ const TailoringDashboard = () => {
       {/* Header */}
       <header className="bg-white border-b border-emerald-100 sticky top-0 z-50 shadow-sm">
         <div className="max-w-4xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
+          <div className="flex items-center justify-between mb-4">
             <button onClick={() => navigate('/')} className="p-2 -ml-2 text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors">
               <ArrowLeft size={24} />
             </button>
@@ -321,52 +416,38 @@ const TailoringDashboard = () => {
               </div>
               <p className="text-[10px] uppercase tracking-[0.3em] font-bold text-emerald-500 mt-1">Orders & Expenses</p>
             </div>
-            <button
-              onClick={() => { setSearchOpen(!searchOpen); setSearchQuery(''); }}
-              className="p-2 text-emerald-500 hover:bg-emerald-50 rounded-full transition-colors"
-            >
-              {searchOpen ? <X size={22} /> : <Search size={22} />}
-            </button>
+            <div className="w-10"></div>
           </div>
-          {searchOpen && (
-            <div className="mt-3 mb-1">
-              <input
-                type="text"
-                autoFocus
-                value={searchQuery}
-                onChange={e => setSearchQuery(e.target.value)}
-                placeholder="Search by name, phone, item type..."
-                className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-2.5 text-sm focus:border-emerald-400 focus:ring-1 focus:ring-emerald-400 outline-none"
-              />
-            </div>
-          )}
+          
+          <div className="relative">
+            <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-400" size={18} />
+            <input
+              type="text"
+              value={searchQuery}
+              onChange={e => setSearchQuery(e.target.value)}
+              placeholder="Search by name, phone, item type..."
+              className="w-full bg-slate-50 border border-emerald-200 rounded-xl pl-11 pr-10 py-3 text-sm focus:border-emerald-400 focus:ring-4 focus:ring-emerald-400/10 outline-none shadow-sm transition-all font-medium text-slate-800"
+            />
+            {searchQuery && (
+              <button 
+                onClick={() => setSearchQuery('')}
+                className="absolute right-3 top-1/2 -translate-y-1/2 p-1 text-slate-400 hover:bg-slate-200 hover:text-slate-600 rounded-full transition-colors"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
       </header>
 
       <main className="max-w-4xl mx-auto px-4 py-6">
-        {/* Quick Actions */}
-        <div className="grid grid-cols-2 gap-4 mb-6">
-          <button
-            onClick={() => navigate('/tailoring/new')}
-            className="flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-black uppercase tracking-widest py-4 rounded-sm shadow-md transition-all active:scale-[0.98]"
-          >
-            <Plus size={18} /> New Order
-          </button>
-          <button
-            onClick={() => navigate('/tailoring/expense')}
-            className="flex items-center justify-center gap-2 bg-black hover:bg-gray-800 text-white font-black uppercase tracking-widest py-4 rounded-sm shadow-md transition-all active:scale-[0.98]"
-          >
-            <Banknote size={18} /> Pay Tailor
-          </button>
-        </div>
-
         {/* Tabs */}
         <div className="flex border-b border-slate-200 mb-5">
           <button
             onClick={() => setActiveTab('orders')}
             className={`flex-1 py-3 text-sm font-black uppercase tracking-widest border-b-2 transition-colors ${activeTab === 'orders' ? 'border-emerald-500 text-emerald-600 bg-emerald-50/50' : 'border-transparent text-slate-400 hover:text-slate-600'}`}
           >
-            Active Orders
+            Orders
           </button>
           <button
             onClick={() => setActiveTab('tailors')}
@@ -378,7 +459,13 @@ const TailoringDashboard = () => {
 
         {/* ORDERS TAB */}
         {activeTab === 'orders' && (
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
+            <button
+              onClick={() => navigate('/tailoring/new')}
+              className="w-full flex items-center justify-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-white font-black uppercase tracking-widest py-4 rounded-sm shadow-md transition-all active:scale-[0.98] mb-4"
+            >
+              <Plus size={18} /> Add New Order
+            </button>
             {searchQuery && (
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 {filteredOrders.length} result{filteredOrders.length !== 1 ? 's' : ''} for "{searchQuery}"
@@ -392,14 +479,20 @@ const TailoringDashboard = () => {
                 </p>
               </div>
             ) : (
-              filteredOrders.map((order, i) => <OrderCard key={order.id} order={order} index={i + 1} />)
+              filteredOrders.map((order, i) => <div key={order.id}>{renderOrderCard(order, i + 1)}</div>)
             )}
           </div>
         )}
 
         {/* TAILORS TAB */}
         {activeTab === 'tailors' && (
-          <div className="space-y-3">
+          <div className="space-y-3 mt-4">
+            <button
+              onClick={() => navigate('/tailoring/onboard')}
+              className="w-full flex items-center justify-center gap-2 bg-slate-900 hover:bg-black text-white border border-slate-800 font-black uppercase tracking-widest py-3 rounded-sm shadow-sm transition-all active:scale-[0.98] mb-4"
+            >
+              <Plus size={18} /> Add a Tailor
+            </button>
             {searchQuery && (
               <p className="text-xs font-bold text-slate-400 uppercase tracking-widest">
                 {filteredTailors.length} result{filteredTailors.length !== 1 ? 's' : ''} for "{searchQuery}"
@@ -413,51 +506,7 @@ const TailoringDashboard = () => {
                 </p>
               </div>
             ) : (
-              filteredTailors.map(tailor => (
-                <div key={tailor.id} className="bg-white rounded-sm shadow-sm border border-slate-100 p-4">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-3">
-                      <div className="w-10 h-10 bg-emerald-100 rounded-full flex items-center justify-center text-emerald-600 font-black text-lg flex-shrink-0">
-                        {tailor.name?.charAt(0).toUpperCase()}
-                      </div>
-                      <div>
-                        <h4 className="font-bold text-slate-900">{tailor.name}</h4>
-                        <p className="text-xs font-medium text-slate-500">{tailor.phone || 'No phone'}</p>
-                      </div>
-                    </div>
-                    <button
-                      onClick={() => {
-                        setEditingTailorId(editingTailorId === tailor.id ? null : tailor.id);
-                        setTailorNoteInput(tailor.notes || '');
-                      }}
-                      className="text-[10px] font-bold uppercase tracking-wider bg-slate-50 text-slate-600 px-3 py-1.5 rounded-sm hover:bg-slate-100 transition-colors flex items-center gap-1 border border-slate-200"
-                    >
-                      <Pencil size={11} /> Notes
-                    </button>
-                  </div>
-                  {tailor.notes && editingTailorId !== tailor.id && (
-                    <p className="text-xs text-slate-500 italic mt-3 ml-13 border-l-2 border-emerald-200 pl-3">
-                      {tailor.notes}
-                    </p>
-                  )}
-                  {editingTailorId === tailor.id && (
-                    <div className="mt-3 border-t border-slate-100 pt-3">
-                      <label className="block text-[10px] uppercase tracking-widest font-bold text-slate-400 mb-2">Notes</label>
-                      <textarea
-                        value={tailorNoteInput}
-                        onChange={e => setTailorNoteInput(e.target.value)}
-                        rows={3}
-                        placeholder="e.g. Specializes in suits. Available Mon-Fri only."
-                        className="w-full bg-slate-50 border border-slate-200 rounded-sm px-3 py-2 text-sm focus:border-emerald-400 outline-none resize-none"
-                      />
-                      <div className="flex gap-2 mt-2">
-                        <button onClick={() => saveTailorNote(tailor.id)} className="bg-black text-white font-bold uppercase text-[10px] tracking-widest px-4 py-2 rounded-sm hover:bg-gray-800 transition-colors">Save</button>
-                        <button onClick={() => setEditingTailorId(null)} className="bg-slate-100 text-slate-600 font-bold uppercase text-[10px] tracking-widest px-4 py-2 rounded-sm hover:bg-slate-200 transition-colors">Cancel</button>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              ))
+              filteredTailors.map(tailor => renderTailorCard(tailor))
             )}
           </div>
         )}

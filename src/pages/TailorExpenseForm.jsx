@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { ArrowLeft, User, Wallet, Calendar, Clock, CreditCard } from 'lucide-react';
 
@@ -10,6 +10,13 @@ const TailorExpenseForm = () => {
   const [method, setMethod] = useState(''); // Mandatory dropdown
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [time, setTime] = useState(new Date().toLocaleTimeString('en-US', { hour12: false }).substring(0, 5));
+  const [notes, setNotes] = useState('');
+  const [tailorsList, setTailorsList] = useState([]);
+
+  useEffect(() => {
+    const savedTailors = JSON.parse(localStorage.getItem('lucy_tailors') || '[]');
+    setTailorsList(savedTailors);
+  }, []);
 
   const handleSubmit = (e) => {
     e.preventDefault();
@@ -21,7 +28,8 @@ const TailorExpenseForm = () => {
       amount: parseFloat(amount),
       method,
       date,
-      time
+      time,
+      notes
     };
 
     // Save Expense
@@ -58,8 +66,14 @@ const TailorExpenseForm = () => {
           <div className="bg-white p-5 rounded-sm shadow-sm border border-slate-100">
             <h2 className="text-xs font-black uppercase tracking-widest text-slate-800 mb-4 flex items-center gap-2"><User size={16} className="text-slate-500" /> Tailor Info</h2>
             <div>
-              <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Tailor Name</label>
-              <input type="text" value={tailorName} onChange={e => setTailorName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 outline-none" placeholder="e.g. John Tailor" />
+              <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Select Tailor</label>
+              <select value={tailorName} onChange={e => setTailorName(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 outline-none cursor-pointer text-slate-700">
+                <option value="" disabled>Choose a tailor...</option>
+                {tailorsList.map(t => (
+                  <option key={t.id} value={t.name}>{t.name}</option>
+                ))}
+              </select>
+              {tailorsList.length === 0 && <p className="text-[10px] text-rose-500 mt-1">No tailors found. Please onboard a tailor first.</p>}
             </div>
           </div>
 
@@ -95,6 +109,11 @@ const TailorExpenseForm = () => {
                   <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Time</label>
                   <input type="time" value={time} onChange={e => setTime(e.target.value)} required className="w-full bg-slate-50 border border-slate-200 rounded-sm px-3 py-3 text-sm focus:border-slate-400 outline-none" />
                 </div>
+              </div>
+
+              <div className="pt-2">
+                <label className="block text-[10px] uppercase tracking-[0.1em] font-bold text-slate-500 mb-2">Payment Notes (Optional)</label>
+                <textarea value={notes} onChange={e => setNotes(e.target.value)} rows={2} className="w-full bg-slate-50 border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 outline-none resize-none" placeholder="e.g. Advance payment for 3 suits" />
               </div>
             </div>
           </div>
