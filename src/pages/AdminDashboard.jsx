@@ -1,268 +1,380 @@
-import React from 'react';
-import Sidebar from '../components/Sidebar';
-import { 
-  TrendingUp, 
-  ShoppingBag, 
-  Scissors, 
-  Users, 
-  ArrowUpRight, 
-  ArrowDownRight,
-  MoreVertical,
-  Search,
-  Bell
-} from 'lucide-react';
-import { 
-  AreaChart, 
-  Area, 
-  XAxis, 
-  YAxis, 
-  CartesianGrid, 
-  Tooltip, 
-  ResponsiveContainer,
-  PieChart,
-  Pie,
-  Cell
-} from 'recharts';
-
-const data = [
-  { name: 'Mon', sales: 4000, profit: 2400 },
-  { name: 'Tue', sales: 3000, profit: 1398 },
-  { name: 'Wed', sales: 2000, profit: 9800 },
-  { name: 'Thu', sales: 2780, profit: 3908 },
-  { name: 'Fri', sales: 1890, profit: 4800 },
-  { name: 'Sat', sales: 2390, profit: 3800 },
-  { name: 'Sun', sales: 3490, profit: 4300 },
-];
-
-const COLORS = ['#0ea5e9', '#8b5cf6', '#f59e0b', '#10b981'];
-
+import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
+import { ArrowLeft, Activity, Users, DollarSign, ShoppingBag, Scissors, TrendingUp, TrendingDown, Calendar } from 'lucide-react';
 import Header from '../components/Header';
 
 const AdminDashboard = () => {
-  return (
-    <div className="bg-slate-50 min-h-screen relative overflow-x-hidden">
-      <Header />
+  const navigate = useNavigate();
 
-      <Sidebar />
+  // State for data
+  const [stock, setStock] = useState([]);
+  const [sales, setSales] = useState([]);
+  const [tailorPayments, setTailorPayments] = useState([]);
+  const [tailorExpenses, setTailorExpenses] = useState([]);
+  const [tailors, setTailors] = useState([]);
+  const [tailoringOrders, setTailoringOrders] = useState([]);
+
+  // State for dates
+  const today = new Date().toISOString().split('T')[0];
+  const firstDayOfMonth = new Date(new Date().getFullYear(), new Date().getMonth(), 1).toISOString().split('T')[0];
+  
+  const [fromDate, setFromDate] = useState(firstDayOfMonth);
+  const [toDate, setToDate] = useState(today);
+
+  // Load data on mount
+  useEffect(() => {
+    const savedStock = localStorage.getItem('lucy_stock');
+    if (savedStock) setStock(JSON.parse(savedStock));
+    
+    const savedSales = localStorage.getItem('lucy_sales');
+    if (savedSales) setSales(JSON.parse(savedSales));
+    
+    const savedTailorPayments = localStorage.getItem('lucy_tailoring_payments');
+    if (savedTailorPayments) setTailorPayments(JSON.parse(savedTailorPayments));
+    
+    const savedTailorExpenses = localStorage.getItem('lucy_tailor_expenses');
+    if (savedTailorExpenses) setTailorExpenses(JSON.parse(savedTailorExpenses));
+
+    const savedTailors = localStorage.getItem('lucy_tailors');
+    if (savedTailors) setTailors(JSON.parse(savedTailors));
+
+    const savedOrders = localStorage.getItem('lucy_tailoring_orders');
+    if (savedOrders) setTailoringOrders(JSON.parse(savedOrders));
+  }, []);
+
+  // Filter Logic
+  const filteredStock = stock.filter(item => item.date >= fromDate && item.date <= toDate);
+  const filteredSales = sales.filter(sale => sale.date >= fromDate && sale.date <= toDate);
+  const filteredTailorPayments = tailorPayments.filter(payment => payment.date >= fromDate && payment.date <= toDate);
+  const filteredTailorExpenses = tailorExpenses.filter(expense => expense.date >= fromDate && expense.date <= toDate);
+
+  // --- Calculations ---
+
+  // Boutique
+  const stockInValue = filteredStock.reduce((sum, item) => sum + (item.quantity * (item.buyingPrice || 0)), 0);
+  const stockOutRevenue = filteredSales.reduce((sum, sale) => sum + (sale.soldPrice || 0), 0);
+  const boutiqueProfit = filteredSales.reduce((sum, sale) => sum + (sale.profit || 0), 0);
+  const itemsSold = filteredSales.length;
+  const itemsStocked = filteredStock.reduce((sum, item) => sum + (item.quantity || 0), 0);
+
+  // Tailoring
+  const tailoringRevenue = filteredTailorPayments.reduce((sum, payment) => sum + (payment.amount || 0), 0);
+  const tailoringExpenses = filteredTailorExpenses.reduce((sum, expense) => sum + (expense.amount || 0), 0);
+  const tailoringProfit = tailoringRevenue - tailoringExpenses;
+  const totalTailors = tailors.length;
+
+  // Overall
+  const totalRevenue = stockOutRevenue + tailoringRevenue;
+  const totalExpenses = stockInValue + tailoringExpenses; // Treating stock in as an expense/investment for the period
+  const netProfit = boutiqueProfit + tailoringProfit;
+
+  return (
+    <div className="min-h-screen bg-[#0a0a0a] text-white selection:bg-pink-500 selection:text-white pb-20">
+      <Header />
       
-      <main className="w-full p-4 md:p-8 pt-44 lg:pt-40">
-        {/* Header */}
-        <header className="flex flex-col lg:flex-row justify-between items-start lg:items-center mb-10 gap-6">
-          <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-            <div>
-              <h1 className="text-3xl font-black text-slate-900 tracking-tight">Admin Overview</h1>
-              <p className="text-slate-500 font-bold text-xs uppercase tracking-widest mt-1">Real-time Performance Insights</p>
-            </div>
+      <main className="pt-[120px] px-4 md:px-8 max-w-7xl mx-auto">
+        {/* Top Header */}
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+          <div>
+            <button 
+              onClick={() => navigate('/')}
+              className="flex items-center text-white/50 hover:text-white transition-colors text-sm font-medium mb-2"
+            >
+              <ArrowLeft size={16} className="mr-2" />
+              Back to Home
+            </button>
+            <h1 className="text-3xl md:text-4xl font-black tracking-tight bg-gradient-to-r from-white to-white/50 bg-clip-text text-transparent">
+              Rev Kepher Omondi Dashboard
+            </h1>
+            <p className="text-white/40 text-sm mt-1 flex items-center">
+              <Activity size={14} className="mr-2" /> Remote Business Tracking
+            </p>
           </div>
-          <div className="flex items-center gap-4 w-full lg:w-auto">
-            <div className="relative group flex-1 lg:flex-none">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 group-focus-within:text-blue-500 transition-colors" size={20} />
+
+          {/* Date Filters */}
+          <div className="flex items-center gap-2 bg-white/5 p-2 rounded-lg border border-white/10 backdrop-blur-md">
+            <Calendar size={16} className="text-white/40 ml-2" />
+            <div className="flex items-center px-2">
+              <span className="text-[10px] uppercase font-bold text-white/40 mr-2 tracking-widest">From</span>
               <input 
-                type="text" 
-                placeholder="Search analytics..."
-                className="pl-10 pr-4 py-2.5 bg-white border border-slate-200 rounded-xl focus:outline-none focus:ring-4 focus:ring-blue-500/10 focus:border-blue-500 transition-all w-full md:w-64"
+                type="date" 
+                value={fromDate}
+                onChange={(e) => setFromDate(e.target.value)}
+                className="bg-transparent text-white text-sm font-medium focus:outline-none [color-scheme:dark]"
               />
             </div>
-            <div className="flex items-center gap-3 bg-white p-1.5 pr-4 border border-slate-100 rounded-2xl shadow-sm">
-              <div className="w-10 h-10 premium-gradient rounded-xl flex items-center justify-center text-white shadow-md font-bold">
-                K
-              </div>
-              <div className="hidden sm:block">
-                <p className="text-xs font-black text-slate-900 uppercase tracking-tight">Kennedy</p>
-                <p className="text-[9px] font-bold text-blue-600 uppercase tracking-widest">Super Admin</p>
-              </div>
+            <div className="w-px h-6 bg-white/10"></div>
+            <div className="flex items-center px-2">
+              <span className="text-[10px] uppercase font-bold text-white/40 mr-2 tracking-widest">To</span>
+              <input 
+                type="date" 
+                value={toDate}
+                onChange={(e) => setToDate(e.target.value)}
+                className="bg-transparent text-white text-sm font-medium focus:outline-none [color-scheme:dark]"
+              />
             </div>
           </div>
-        </header>
-
-        {/* Stats Grid */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-10">
-          {[
-            { label: 'Total Revenue', value: 'KSh 45,231', trend: '+12.5%', up: true, icon: <TrendingUp className="text-blue-600" />, bg: 'bg-blue-50' },
-            { label: 'Daily Sales', value: '12', trend: '+3', up: true, icon: <ShoppingBag className="text-purple-600" />, bg: 'bg-purple-50' },
-            { label: 'Pending Orders', value: '8', trend: '-2', up: false, icon: <Scissors className="text-amber-600" />, bg: 'bg-amber-50' },
-            { label: 'Active Customers', value: '156', trend: '+18', up: true, icon: <Users className="text-emerald-600" />, bg: 'bg-emerald-50' },
-          ].map((stat, i) => (
-            <div key={i} className="bg-white p-6 rounded-[2rem] border border-slate-100 shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all group">
-              <div className="flex justify-between items-start mb-4">
-                <div className={`w-12 h-12 ${stat.bg} rounded-2xl flex items-center justify-center group-hover:scale-110 transition-transform`}>
-                  {stat.icon}
-                </div>
-                <div className={`flex items-center gap-1 text-xs font-bold px-2 py-1 rounded-full ${stat.up ? 'bg-emerald-50 text-emerald-600' : 'bg-rose-50 text-rose-600'}`}>
-                  {stat.up ? <ArrowUpRight size={14} /> : <ArrowDownRight size={14} />}
-                  {stat.trend}
-                </div>
-              </div>
-              <p className="text-slate-500 font-bold text-xs uppercase tracking-wider">{stat.label}</p>
-              <h3 className="text-2xl font-black text-slate-900 mt-1">{stat.value}</h3>
-            </div>
-          ))}
         </div>
 
-        {/* Charts Section */}
-        <div className="grid lg:grid-cols-3 gap-8 mb-10">
-          <div className="lg:col-span-2 bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <div className="flex justify-between items-center mb-8">
-              <h3 className="text-xl font-black text-slate-900">Sales Trend</h3>
-              <select className="bg-slate-50 border-none rounded-lg text-sm font-bold text-slate-600 focus:ring-0 cursor-pointer">
-                <option>Last 7 Days</option>
-                <option>Last 30 Days</option>
-              </select>
-            </div>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={data}>
-                  <defs>
-                    <linearGradient id="colorSales" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="5%" stopColor="#0ea5e9" stopOpacity={0.1}/>
-                      <stop offset="95%" stopColor="#0ea5e9" stopOpacity={0}/>
-                    </linearGradient>
-                  </defs>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
-                  <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 600}} dy={10} />
-                  <YAxis axisLine={false} tickLine={false} tick={{fill: '#94a3b8', fontSize: 12, fontWeight: 600}} dx={-10} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 15px -3px rgb(0 0 0 / 0.1)'}}
-                    itemStyle={{fontWeight: 700}}
-                  />
-                  <Area type="monotone" dataKey="sales" stroke="#0ea5e9" strokeWidth={3} fillOpacity={1} fill="url(#colorSales)" />
-                </AreaChart>
-              </ResponsiveContainer>
+        {/* Top Level Metrics (The big picture) */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+          <div className="relative group overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-md hover:bg-white/[0.07] transition-all duration-300">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-blue-500 to-cyan-500"></div>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/50 font-bold mb-1">Total Revenue</p>
+                <h2 className="text-3xl font-black text-white">Ksh {totalRevenue.toLocaleString()}</h2>
+              </div>
+              <div className="p-3 bg-blue-500/10 rounded-lg text-blue-400">
+                <span className="font-black text-xl">KSh</span>
+              </div>
             </div>
           </div>
 
-          <div className="bg-white p-8 rounded-[2.5rem] border border-slate-100 shadow-sm">
-            <h3 className="text-xl font-black text-slate-900 mb-8">Product Categories</h3>
-            <div className="h-[300px] w-full relative">
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={[
-                      { name: 'Dresses', value: 400 },
-                      { name: 'Suits', value: 300 },
-                      { name: 'Shirts', value: 300 },
-                      { name: 'Uniforms', value: 200 },
-                    ]}
-                    innerRadius={60}
-                    outerRadius={80}
-                    paddingAngle={5}
-                    dataKey="value"
-                  >
-                    {COLORS.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 text-center pointer-events-none">
-                <p className="text-2xl font-black text-slate-900">1.2k</p>
-                <p className="text-[10px] font-bold text-slate-400 uppercase tracking-widest">Total Items</p>
+          <div className="relative group overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-md hover:bg-white/[0.07] transition-all duration-300">
+            <div className="absolute top-0 left-0 w-full h-1 bg-gradient-to-r from-rose-500 to-pink-500"></div>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/50 font-bold mb-1">Total Expenses/Stock</p>
+                <h2 className="text-3xl font-black text-white">Ksh {totalExpenses.toLocaleString()}</h2>
+              </div>
+              <div className="p-3 bg-rose-500/10 rounded-lg text-rose-400">
+                <TrendingDown size={24} />
               </div>
             </div>
-            <div className="space-y-3 mt-4">
-              {['Dresses', 'Suits', 'Shirts', 'Uniforms'].map((cat, i) => (
-                <div key={i} className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <div className="w-3 h-3 rounded-full" style={{backgroundColor: COLORS[i]}}></div>
-                    <span className="text-sm font-bold text-slate-600">{cat}</span>
+          </div>
+
+          <div className="relative group overflow-hidden rounded-2xl bg-white/5 border border-white/10 p-6 backdrop-blur-md hover:bg-white/[0.07] transition-all duration-300">
+            <div className={`absolute top-0 left-0 w-full h-1 bg-gradient-to-r ${netProfit >= 0 ? 'from-emerald-500 to-teal-500' : 'from-red-500 to-rose-500'}`}></div>
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-xs uppercase tracking-widest text-white/50 font-bold mb-1">Net Profit</p>
+                <h2 className={`text-3xl font-black ${netProfit >= 0 ? 'text-emerald-400' : 'text-red-400'}`}>
+                  {netProfit >= 0 ? '+' : '-'}Ksh {Math.abs(netProfit).toLocaleString()}
+                </h2>
+              </div>
+              <div className={`p-3 rounded-lg ${netProfit >= 0 ? 'bg-emerald-500/10 text-emerald-400' : 'bg-red-500/10 text-red-400'}`}>
+                <TrendingUp size={24} />
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          
+          {/* Boutique Breakdown */}
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-32 bg-violet-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            
+            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+              <div className="p-2 bg-violet-500/20 text-violet-400 rounded-lg">
+                <ShoppingBag size={20} />
+              </div>
+              <h3 className="text-lg font-bold">Boutique Performance</h3>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Stock Value In</span>
+                <span className="font-bold">Ksh {stockInValue.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Sales Revenue</span>
+                <span className="font-bold">Ksh {stockOutRevenue.toLocaleString()}</span>
+              </div>
+              <div className="w-full h-px bg-white/10"></div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Boutique Profit</span>
+                <span className={`font-black ${boutiqueProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {boutiqueProfit >= 0 ? '+' : '-'}Ksh {Math.abs(boutiqueProfit).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Items Sold</p>
+                  <p className="text-xl font-bold">{itemsSold}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Items Stocked</p>
+                  <p className="text-xl font-bold">{itemsStocked}</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Tailoring Breakdown */}
+          <div className="rounded-2xl border border-white/10 bg-black/40 backdrop-blur-xl p-6 relative overflow-hidden">
+            <div className="absolute top-0 right-0 p-32 bg-emerald-500/5 rounded-full blur-3xl -mr-16 -mt-16 pointer-events-none"></div>
+            
+            <div className="flex items-center gap-3 mb-6 border-b border-white/10 pb-4">
+              <div className="p-2 bg-emerald-500/20 text-emerald-400 rounded-lg">
+                <Scissors size={20} />
+              </div>
+              <h3 className="text-lg font-bold">Tailoring Performance</h3>
+            </div>
+
+            <div className="space-y-6">
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Tailoring Revenue</span>
+                <span className="font-bold">Ksh {tailoringRevenue.toLocaleString()}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Tailoring Expenses</span>
+                <span className="font-bold">Ksh {tailoringExpenses.toLocaleString()}</span>
+              </div>
+              <div className="w-full h-px bg-white/10"></div>
+              <div className="flex justify-between items-center">
+                <span className="text-white/60">Tailoring Profit</span>
+                <span className={`font-black ${tailoringProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  {tailoringProfit >= 0 ? '+' : '-'}Ksh {Math.abs(tailoringProfit).toLocaleString()}
+                </span>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                <div className="bg-white/5 rounded-lg p-4 border border-white/5">
+                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Total Orders</p>
+                  <p className="text-xl font-bold">{filteredTailorPayments.length}</p>
+                </div>
+                <div className="bg-white/5 rounded-lg p-4 border border-white/5 flex flex-col justify-between">
+                  <p className="text-[10px] uppercase tracking-widest text-white/40 mb-1">Active Tailors</p>
+                  <div className="flex items-center justify-between">
+                    <p className="text-xl font-bold">{totalTailors}</p>
+                    <Users size={16} className="text-white/20" />
                   </div>
-                  <span className="text-sm font-black text-slate-900">{(400 - i*50)} units</span>
                 </div>
-              ))}
+              </div>
             </div>
           </div>
+
         </div>
 
-        {/* Recent Transactions Table */}
-        <div className="bg-white rounded-[2.5rem] border border-slate-100 shadow-sm overflow-hidden">
-          <div className="p-8 border-b border-slate-50 flex justify-between items-center">
-            <h3 className="text-xl font-black text-slate-900">Recent Transactions</h3>
-            <button className="text-blue-600 font-bold text-sm hover:underline">View All History</button>
-          </div>
-          <div className="hidden md:block overflow-x-auto">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50/50">
-                  <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Customer</th>
-                  <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Product</th>
-                  <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Date</th>
-                  <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest">Status</th>
-                  <th className="px-8 py-4 text-xs font-bold text-slate-400 uppercase tracking-widest text-right">Amount</th>
-                  <th className="px-8 py-4 w-10"></th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-50">
-                {[
-                  { name: 'John Doe', item: 'Silk Wedding Suit', date: 'Oct 24, 2023', status: 'Completed', amount: 'KSh 12,500' },
-                  { name: 'Sarah Ken', item: 'Floral Summer Dress', date: 'Oct 23, 2023', status: 'Pending', amount: 'KSh 4,200' },
-                  { name: 'Mike Ross', item: 'Office Cotton Shirt', date: 'Oct 23, 2023', status: 'Completed', amount: 'KSh 2,800' },
-                  { name: 'Lilian Kamau', item: 'School Uniform Set', date: 'Oct 22, 2023', status: 'Processing', amount: 'KSh 3,500' },
-                ].map((row, i) => (
-                  <tr key={i} className="hover:bg-slate-50/50 transition-colors group">
-                    <td className="px-8 py-5">
-                      <div className="flex items-center gap-3">
-                        <div className="w-9 h-9 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-sm">
-                          {row.name.charAt(0)}
-                        </div>
-                        <span className="font-bold text-slate-800">{row.name}</span>
-                      </div>
-                    </td>
-                    <td className="px-8 py-5 text-slate-600 font-medium">{row.item}</td>
-                    <td className="px-8 py-5 text-slate-500 text-sm font-medium">{row.date}</td>
-                    <td className="px-8 py-5">
-                      <span className={`px-3 py-1 rounded-full text-[10px] font-black uppercase tracking-widest ${
-                        row.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 
-                        row.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
-                      }`}>
-                        {row.status}
-                      </span>
-                    </td>
-                    <td className="px-8 py-5 text-right font-black text-slate-900">{row.amount}</td>
-                    <td className="px-8 py-5">
-                      <button className="p-2 text-slate-400 hover:text-slate-800 transition-colors">
-                        <MoreVertical size={16} />
-                      </button>
-                    </td>
+        {/* Detailed Activity Logs */}
+        <div className="mt-8 space-y-8">
+          
+          {/* Boutique Sales Log */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <ShoppingBag size={18} className="text-violet-400" /> Recent Boutique Sales
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-white/40">
+                    <th className="pb-3 pr-4">Date</th>
+                    <th className="pb-3 pr-4">Customer Info</th>
+                    <th className="pb-3 pr-4">Product</th>
+                    <th className="pb-3 text-right">Amount (Ksh)</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredSales.length > 0 ? filteredSales.map((sale, i) => (
+                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 pr-4 text-sm text-white/70">{sale.date}</td>
+                      <td className="py-3 pr-4">
+                        <div className="flex flex-col">
+                          <span className="text-sm font-bold text-white">{sale.customerName || 'Walk-in'}</span>
+                          <span className="text-[10px] text-white/50">{sale.customerPhone || 'N/A'}</span>
+                        </div>
+                      </td>
+                      <td className="py-3 pr-4 text-sm text-white/70">{sale.itemName || sale.name || 'N/A'}</td>
+                      <td className="py-3 text-right font-bold text-emerald-400">{sale.soldPrice?.toLocaleString()}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="4" className="py-6 text-center text-sm text-white/40">No recent sales found in this period.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
 
-          {/* Mobile Card List */}
-          <div className="md:hidden divide-y divide-slate-50">
-            {[
-              { name: 'John Doe', item: 'Silk Wedding Suit', date: 'Oct 24, 2023', status: 'Completed', amount: 'KSh 12,500' },
-              { name: 'Sarah Ken', item: 'Floral Summer Dress', date: 'Oct 23, 2023', status: 'Pending', amount: 'KSh 4,200' },
-              { name: 'Mike Ross', item: 'Office Cotton Shirt', date: 'Oct 23, 2023', status: 'Completed', amount: 'KSh 2,800' },
-              { name: 'Lilian Kamau', item: 'School Uniform Set', date: 'Oct 22, 2023', status: 'Processing', amount: 'KSh 3,500' },
-            ].map((row, i) => (
-              <div key={i} className="p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-full bg-slate-100 flex items-center justify-center font-bold text-slate-600 text-sm">
-                      {row.name.charAt(0)}
-                    </div>
-                    <div>
-                      <p className="font-bold text-slate-800 text-sm">{row.name}</p>
-                      <p className="text-[10px] font-black text-slate-400 uppercase tracking-widest">{row.date}</p>
-                    </div>
-                  </div>
-                  <span className={`px-2 py-1 rounded-full text-[9px] font-black uppercase tracking-widest ${
-                    row.status === 'Completed' ? 'bg-emerald-50 text-emerald-600' : 
-                    row.status === 'Pending' ? 'bg-amber-50 text-amber-600' : 'bg-blue-50 text-blue-600'
-                  }`}>
-                    {row.status}
-                  </span>
-                </div>
-                <div className="flex justify-between items-center bg-slate-50 p-3 rounded-xl">
-                  <span className="text-xs font-bold text-slate-600">{row.item}</span>
-                  <span className="text-sm font-black text-slate-900">{row.amount}</span>
-                </div>
-              </div>
-            ))}
+          {/* Tailoring Orders / Payments Log */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Scissors size={18} className="text-emerald-400" /> Recent Tailoring Payments (Installments & Deposits)
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-white/40">
+                    <th className="pb-3 pr-4">Date</th>
+                    <th className="pb-3 pr-4">Customer Info</th>
+                    <th className="pb-3 pr-4">Product(s)</th>
+                    <th className="pb-3 pr-4">Type</th>
+                    <th className="pb-3 text-right">Amount Paid (Ksh)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredTailorPayments.length > 0 ? filteredTailorPayments.map((payment, i) => {
+                    const order = tailoringOrders.find(o => o.id === payment.orderId);
+                    const customerName = order?.customerName || payment.customerName || 'N/A';
+                    const customerPhone = order?.customerPhone || 'N/A';
+                    const itemsDesc = order?.items?.map(item => `${item.qty}x ${item.type}`).join(', ') || 'Tailoring Service';
+                    const paymentType = payment.type || 'Payment';
+
+                    return (
+                      <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                        <td className="py-3 pr-4 text-sm text-white/70">{payment.date}</td>
+                        <td className="py-3 pr-4">
+                          <div className="flex flex-col">
+                            <span className="text-sm font-bold text-white">{customerName}</span>
+                            <span className="text-[10px] text-white/50">{customerPhone}</span>
+                          </div>
+                        </td>
+                        <td className="py-3 pr-4 text-sm text-white/70">{itemsDesc}</td>
+                        <td className="py-3 pr-4">
+                          <span className="px-2 py-1 rounded bg-emerald-500/10 text-emerald-400 text-[10px] font-bold uppercase tracking-wider border border-emerald-500/20">
+                            {paymentType}
+                          </span>
+                        </td>
+                        <td className="py-3 text-right font-bold text-emerald-400">{payment.amount?.toLocaleString()}</td>
+                      </tr>
+                    );
+                  }) : (
+                    <tr>
+                      <td colSpan="5" className="py-6 text-center text-sm text-white/40">No payments found in this period.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
           </div>
+
+          {/* Tailor Expenses Log */}
+          <div className="bg-white/5 border border-white/10 rounded-2xl p-6 backdrop-blur-md">
+            <h3 className="text-lg font-bold mb-4 flex items-center gap-2">
+              <Users size={18} className="text-rose-400" /> Tailor Payouts (Who Was Paid)
+            </h3>
+            <div className="overflow-x-auto">
+              <table className="w-full text-left border-collapse">
+                <thead>
+                  <tr className="border-b border-white/10 text-xs uppercase tracking-widest text-white/40">
+                    <th className="pb-3 pr-4">Date</th>
+                    <th className="pb-3 pr-4">Tailor Name</th>
+                    <th className="pb-3 pr-4">Reason</th>
+                    <th className="pb-3 text-right">Amount (Ksh)</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y divide-white/5">
+                  {filteredTailorExpenses.length > 0 ? filteredTailorExpenses.map((expense, i) => (
+                    <tr key={i} className="hover:bg-white/[0.02] transition-colors">
+                      <td className="py-3 pr-4 text-sm text-white/70">{expense.date}</td>
+                      <td className="py-3 pr-4 text-sm font-medium">{expense.tailorName || 'N/A'}</td>
+                      <td className="py-3 pr-4 text-sm text-white/70">{expense.reason || expense.description || 'N/A'}</td>
+                      <td className="py-3 text-right font-bold text-rose-400">{expense.amount?.toLocaleString()}</td>
+                    </tr>
+                  )) : (
+                    <tr>
+                      <td colSpan="4" className="py-6 text-center text-sm text-white/40">No tailor payouts found in this period.</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
         </div>
       </main>
     </div>

@@ -22,6 +22,20 @@ const LandingPage = () => {
   const [fromDate, setFromDate] = useState(firstDayOfMonth);
   const [toDate, setToDate] = useState(today);
 
+  // Admin Modal State
+  const [showPasswordModal, setShowPasswordModal] = useState(false);
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+
+  const handleAdminLogin = (e) => {
+    e.preventDefault();
+    if (password === '1234') {
+      navigate('/admin');
+    } else {
+      setPasswordError('Incorrect password');
+    }
+  };
+
   // Load data on mount
   useEffect(() => {
     const savedStock = localStorage.getItem('lucy_stock');
@@ -173,11 +187,47 @@ const LandingPage = () => {
           </div>
           
           {/* Footer */}
-          <footer className="absolute bottom-4 left-0 right-0 text-center z-20 pointer-events-none w-full">
-            <p className="text-[10px] md:text-xs uppercase tracking-widest text-white/40 font-medium">
-              Designed by <span className="font-bold text-white/70">Dominion Softwares</span> <span className="mx-2 opacity-50">|</span> Tel: 0740881485
+          <footer className="absolute bottom-4 left-0 right-0 text-center z-20 w-full pointer-events-auto">
+            <p className="text-[10px] md:text-xs uppercase tracking-widest text-white/40 font-medium flex items-center justify-center gap-1">
+              Designed by 
+              <button 
+                onClick={() => setShowPasswordModal(true)} 
+                className="hover:text-white transition-colors cursor-pointer text-[8px] tracking-tighter opacity-30 hover:opacity-100"
+              >
+                log in
+              </button>
+              <span className="font-bold text-white/70">Dominion Softwares</span> <span className="mx-2 opacity-50">|</span> Tel: 0740881485
             </p>
           </footer>
+
+          {/* Password Modal */}
+          {showPasswordModal && (
+            <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/80 backdrop-blur-sm p-4">
+              <div className="bg-[#111] border border-white/10 rounded-2xl p-6 w-full max-w-sm relative shadow-2xl animate-in fade-in zoom-in-95 duration-200">
+                <button 
+                  onClick={() => { setShowPasswordModal(false); setPassword(''); setPasswordError(''); }}
+                  className="absolute top-4 right-4 text-white/50 hover:text-white"
+                >
+                  ✕
+                </button>
+                <h3 className="text-xl font-black text-white mb-4">Admin Access</h3>
+                <form onSubmit={handleAdminLogin}>
+                  <input 
+                    type="password" 
+                    value={password}
+                    onChange={(e) => { setPassword(e.target.value); setPasswordError(''); }}
+                    placeholder="Enter Password"
+                    className="w-full bg-white/5 border border-white/10 rounded-lg px-4 py-3 text-white mb-2 focus:outline-none focus:border-white/30"
+                    autoFocus
+                  />
+                  {passwordError && <p className="text-rose-500 text-xs mb-4">{passwordError}</p>}
+                  <button type="submit" className="w-full bg-white text-black font-black uppercase tracking-widest text-sm py-3 rounded-lg hover:bg-white/90 transition-colors mt-2">
+                    Access Dashboard
+                  </button>
+                </form>
+              </div>
+            </div>
+          )}
         </section>
 
       {/* Custom Styles for the scroll line animation */}
